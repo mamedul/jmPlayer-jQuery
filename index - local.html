@@ -1,0 +1,537 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<title>jmPlayer</title>
+	<meta charset="UTF-8">
+	<meta http-equiv="X-UA-Compatible" content="IE=edge">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<meta http-equiv="pragma" content="no-cache" />
+	<!--<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>-->
+	<script src="./jquery.min.js"></script>
+	<script src="./jmplayer.js"></script>
+	<link href="./jmplayer.css" rel="stylesheet" />
+	<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css" rel="stylesheet" />
+	
+	<style>
+
+		body{
+			background-color: grey;
+		}
+
+		.jmplayer_holder{
+			width: 100%;
+			max-width: 600px;
+			height: 400px;
+		}
+
+	</style>
+</head>
+<body>
+	
+<div class="container">
+
+	<div class="jmplayer_holder">
+
+		<video class="jmplayer" id="jmplayer1">
+			<source src="https://ia801904.us.archive.org/8/items/popeye-pubdomain/A_Date_to_Skate.mp4"></source>
+		</video>
+		<div class="jmplayer_heading">
+			<img class="jmplayer_heading_thumb" src="https://www.mediacontex.com/uploads/3/1/5/1/31519237/mediacaption-logo-shrunk_4.png">
+			<span class="jmplayer_heading_title"></span>
+		</div>
+		<div class="jmplayer_loading">
+			<div class="loading_ring"><span></span><span></span><span></span></div>
+		</div>
+		<div class="jmplayer_logo">
+			<img src="https://www.mediacontex.com/uploads/3/1/5/1/31519237/mediacaption-logo-shrunk_4.png" height="64" width="64">
+		</div>
+		<div class="jmplayer_controls">
+			<span class="jmplayer_control_seek">
+				<input class="jmplayer_control_seek_input" type="range" min="0" max="100" step="0.01" value="0">
+				<progress class="jmplayer_control_seek_play" max="100" value="0" step="0.01" role="presentation"></progress>
+				<progress class="jmplayer_control_seek_buffer" max="100" value="0" step="0.01" role="presentation"></progress>
+				<progress class="jmplayer_control_seek_loading" max="100" step="0.01" role="presentation"></progress>
+			</span>
+			<span class="jmplayer_control_others">
+				<span class="jmplayer_play_controls">
+					<button type="button" class="jmplayer_control_prev">
+						<i class="fa fa-step-backward"></i>
+						<span class="sr-only">Prev</span>
+					</button>
+					<button type="button" class="jmplayer_control_play">
+						<i class="fa fa-play"></i>
+						<span class="sr-only">Play</span>
+					</button>
+					<button type="button" class="jmplayer_control_pause">
+						<i class="fa fa-pause"></i>
+						<span class="sr-only">Pause</span>
+					</button>
+					<button type="button" class="jmplayer_control_next">
+						<i class="fa fa-step-forward"></i>
+						<span class="sr-only">Next</span>
+					</button>
+					<span class="jmplayer_control_time">
+						<span class="jmplayer_control_time_current">00:00</span>/
+						<span class="jmplayer_control_time_total">00:00</span>
+					</span>
+				</span>
+				<span class="jmplayer_other_controls">
+					<button type="button" class="jmplayer_control_volume">
+						<i class="fa fa-volume-up"></i>
+						<span class="sr-only">Volume</span>
+					</button>
+					<button type="button" class="jmplayer_control_mute">
+						<i class="fa fa-volume-off"></i>
+						<span class="sr-only">Mute</span>
+					</button>
+					<span class="jmplayer_control_volume_control">
+						<input class="jmplayer_control_volume_input" type="range" min="0" max="100" value="100">
+					</span>
+					<button type="button" class="jmplayer_control_fullscreen">
+						<i class="fa fa-expand"></i>
+						<span class="sr-only">Fullscreen</span>
+					</button>
+					<button type="button" class="jmplayer_control_restorescreen">
+						<i class="fa fa-compress"></i>
+						<span class="sr-only">Restore screen</span>
+					</button>
+				</span>
+			</span>
+		</div>
+		
+	</div>
+	<div class="plyr-playlist-wrapper">
+	</div>
+
+</div>
+
+<script>
+
+	// Parse seconds
+	function parseSeconds(seconds){
+		var s = seconds;
+		var h = Math.floor(s / 3600);
+		var hm = Math.floor(s % 3600);
+		var m = Math.floor(hm / 60);
+		m = (m >= 10) ? m : "0" + m;
+		s = Math.floor(s % 60);
+		s = (s >= 10) ? s : "0" + s;
+		return (h>0?h+":":"") + m + ":" + s;
+	};
+
+	jQuery(document).ready(function(){
+
+		
+		
+		/* PLAYLIST  */
+		var myPlaylist = [
+			{
+				title: "A_Haul_in_One.mp4",
+				author: "Charlie Puth",
+				description: "Description1",
+				sources: { 
+					src: "./assets/video2.mp4", 
+					type: ""
+				},
+				poster: "https://img.youtube.com/vi/nfs8NYg7yQM/hqdefault.jpg"
+			},
+
+			{
+				title: "Aladdin-and-His-Wonderful-Lamp.mp4",
+				author: "Avicii",
+				description: "Description2",
+				sources: { 
+					src: "./assets/video1.mov", 
+					type: ""
+				},
+				poster: "https://i.ytimg.com/vi/RnVbU3NYrZw/default.jpg"
+			}
+
+		];
+
+		var playingclass = "pls-playing";
+
+
+
+		//Play Next
+		function playPrev() {
+
+			var lists = jQuery('.plyr-playlist li');
+			var curr = jQuery('.plyr-playlist .'+playingclass);
+
+			var need_play = null;
+			var tgt;
+
+			if(curr.length==0){
+				curr = lists.first();
+				need_play = curr;
+			}
+
+			if(lists.length>1 && need_play==null ){
+
+				if(curr.prev("li").length){
+					need_play = curr.prev("li");
+				}else{
+					need_play = lists.last();
+				}
+
+			}
+
+			tgt = need_play.find("a")[0];
+			playFromList( tgt );
+
+		}
+
+		//Play Next
+		function playNext() {
+
+			var lists = jQuery('.plyr-playlist li');
+			var curr = jQuery('.plyr-playlist .'+playingclass);
+
+			var need_play = null;
+			var tgt
+
+			if(curr.length==0){
+				curr = lists.first();
+				need_play = curr;
+			}
+
+			if(lists.length>1 && need_play==null ){
+				
+				if(curr.next("li").length){
+					need_play = curr.next("li");
+					
+				}else{
+					need_play = lists.first();
+				}
+
+			}
+
+			tgt = need_play.find("a")[0];
+			playFromList( tgt );
+
+		}
+
+
+		//Play Next
+		function playFromList( tgt ) {
+			
+			var tgt_src = jQuery(tgt).attr("data-video-id");
+			var tgt_type = jQuery(tgt).attr("data-type");
+			var videotitleauthor = jQuery(tgt).find(".VideoTitleAuthor").html();
+			var videotitle = videotitleauthor.split('<br>')[0];
+			var miniposter = jQuery(tgt).find("img.plyr-miniposter").attr('src');
+
+			jQuery(tgt).closest(".jmplayer_holder").find(".jmplayer_controls .jmplayer_control_time .jmplayer_control_time_current").html( parseSeconds(0) );
+			jQuery(tgt).closest(".jmplayer_holder").find(".jmplayer_controls .jmplayer_control_time .jmplayer_control_time_total").html( parseSeconds(0)  );
+
+			jQuery(".jmplayer_holder .jmplayer_heading_thumb").attr("src",miniposter);
+			jQuery(".jmplayer_holder .jmplayer_heading_title").html(videotitle);
+
+			var vid = document.getElementById('jmplayer1');
+			var source = document.createElement('source');
+			source.setAttribute('src', tgt_src);
+			vid.src = tgt_src;
+			vid.currentTime = 0;
+			vid.load();
+
+			if(vid.paused){
+				//var promise=vid.pause();
+			}else{
+				//var promise=vid.play();
+			}
+			var promise=vid.play();
+			if(promise!== undefined){promise.then(function(){}).catch(function(error) {});}
+
+			jQuery(tgt).parent().parent().find("li").removeClass(playingclass);
+			jQuery(tgt).parent().addClass(playingclass);
+
+			try{
+				// Calculating new position of scrollbar
+				var scroll_position = jQuery(tgt).parent().offset().top - jQuery('.plyr-playlist').offset().top + jQuery('.plyr-playlist').scrollTop();
+
+				jQuery('.plyr-playlist').animate({
+					scrollTop: scroll_position-4
+				}, 400);
+
+			}catch{}
+
+			this.play = function(){
+				var promise=vid.play();
+				if(promise!== undefined){promise.then(function(){}).catch(function(error) {});}
+			}
+
+			this.pause = function(){
+				var promise=vid.pause();
+				if(promise!== undefined){promise.then(function(){}).catch(function(error) {});}
+			}
+
+			return this;
+
+		}
+
+
+		var list_html = '<ul class="plyr-playlist">';
+
+		for( var i=0; i<myPlaylist.length; i++ ){
+			
+			myPlaylist[i].title = myPlaylist[i].title ? myPlaylist[i].title : '';
+			myPlaylist[i].author = myPlaylist[i].author ? myPlaylist[i].author : '';
+			myPlaylist[i].description = myPlaylist[i].description ? myPlaylist[i].description : '';
+			myPlaylist[i].poster = myPlaylist[i].poster ? myPlaylist[i].poster : '';
+			myPlaylist[i].poster = myPlaylist[i].poster ? myPlaylist[i].poster : '';
+			myPlaylist[i].sources.type = myPlaylist[i].sources.type ? myPlaylist[i].sources.type : '';
+			myPlaylist[i].sources.src = myPlaylist[i].sources.src ? myPlaylist[i].sources.src : '';
+			list_html+='<li><a href="#" data-type="' + myPlaylist[i].sources.type +'" data-video-id="' + myPlaylist[i].sources.src +'"><img class="plyr-miniposter" src="' + myPlaylist[i].poster + '">' + "<div class='VideoTitleAuthor'>" + myPlaylist[i].title + "<br>" + myPlaylist[i].author + "</div>" + "<div class='VideoDescription'>" + myPlaylist[i].description + "</div>" + "</a></li>";
+
+		}
+
+		list_html+="</ul>";
+
+		jQuery('.plyr-playlist-wrapper').html(list_html);
+
+		jQuery('.plyr-playlist-wrapper').on("click", "li a", function(e){
+
+			e.preventDefault ? e.preventDefault() : e.returnValue = false;
+			playFromList( this );
+
+		});
+
+		jQuery('.jmplayer_controls .jmplayer_control_prev').on("click", function(e){
+			playPrev();
+		});
+
+		jQuery('.jmplayer_controls .jmplayer_control_next').on("click", function(e){
+			playNext();
+		});
+
+		playNext();
+
+
+
+		jQuery("#jmplayer1").jmPlayer({
+				seekable: true, // Time seekable
+				seekAmount: 0.05, // Seek amount in percentage
+				volume: 100, // Percentage
+				volumeChangeable: true, // Volume can change
+				autoplay: true, // Autoplay on loaded
+				position: 0, // Start position in seconds
+				poster: true, // Show video poster
+				defaultControls: false, // Default controls show
+				// Custom controls elements
+				controls: {
+					play: ".jmplayer_control_play",  // Play element
+					pause: ".jmplayer_control_pause", // Pause element
+					stop: null, // Stop element
+					togglePlayPause: null, // Toggle play & pause element
+					volume: ".jmplayer_control_volume_input", // Volume element
+					volumePlus: null, // Volume plus element
+					volumeMinus: null, // Volume minus element
+					mute: ".jmplayer_control_volume", // Mute element
+					unmute: ".jmplayer_control_mute", // Unmute element
+					toggleMute: null, // Toggle mute element
+					seek: ".jmplayer_control_seek_input", // Seek element
+					forward: null, // Forward element
+					backward: null, // Backward element
+					fullScreen: [".jmplayer_control_fullscreen", document.querySelector("#jmplayer1").parentNode ], // Fullscreen element
+					restoreScreen: ".jmplayer_control_restorescreen", // Restore screen element
+					toggleScreen: null, // Toggle screen element
+				},
+
+				// Event handle
+				// On load before the media
+				onbefore: function(el){
+					jQuery(el).closest(".jmplayer_holder").find(".jmplayer_controls .jmplayer_control_fullscreen").removeClass('jmp_hide');
+					jQuery(el).closest(".jmplayer_holder").find(".jmplayer_controls .jmplayer_control_restorescreen").addClass('jmp_hide');
+					jQuery(el).closest(".jmplayer_holder").find(".jmplayer_controls .jmplayer_control_seek_play").addClass('jmp_hide');
+					jQuery(el).closest(".jmplayer_holder").find(".jmplayer_controls .jmplayer_control_seek_loading").removeClass('jmp_hide');
+					if(el.muted){
+						jQuery(el).closest(".jmplayer_holder").find(".jmplayer_controls .jmplayer_control_mute").removeClass('jmp_hide');
+						jQuery(el).closest(".jmplayer_holder").find(".jmplayer_controls .jmplayer_control_volume").addClass('jmp_hide');
+					}else{
+						jQuery(el).closest(".jmplayer_holder").find(".jmplayer_controls .jmplayer_control_mute").addClass('jmp_hide');
+						jQuery(el).closest(".jmplayer_holder").find(".jmplayer_controls .jmplayer_control_volume").removeClass('jmp_hide');
+					}
+					
+					jQuery(".jmplayer_controls .jmplayer_control_seek_input").on("change input", function(e){
+						jQuery(".jmplayer_controls .jmplayer_control_seek_play").val( jQuery(this).val() );
+					});
+
+					jQuery(".jmplayer_holder .jmplayer_logo").on("click", function(e){
+						var promise = el.play();
+						if(promise!== undefined){promise.then(function(){}).catch(function(error){});}
+					});
+				},
+				// On load start the media
+				onloadstart: function(e){
+					e = e || Event || window.Event;
+					var tgt = e.target || e.srcElement ||e.currentTarget;
+					jQuery(tgt).closest(".jmplayer_holder").find(".jmplayer_loading").removeClass('jmp_hide');
+					jQuery(tgt).closest(".jmplayer_holder").find(".jmplayer_logo").addClass('jmp_hide');
+					jQuery(tgt).closest(".jmplayer_holder").find(".jmplayer_controls .jmplayer_control_play").removeClass('jmp_hide');
+					jQuery(tgt).closest(".jmplayer_holder").find(".jmplayer_controls .jmplayer_control_pause").addClass('jmp_hide');
+					if(tgt.muted){
+						jQuery(tgt).closest(".jmplayer_holder").find(".jmplayer_controls .jmplayer_control_mute").removeClass('jmp_hide');
+						jQuery(tgt).closest(".jmplayer_holder").find(".jmplayer_controls .jmplayer_control_volume").addClass('jmp_hide');
+					}else{
+						jQuery(tgt).closest(".jmplayer_holder").find(".jmplayer_controls .jmplayer_control_mute").addClass('jmp_hide');
+						jQuery(tgt).closest(".jmplayer_holder").find(".jmplayer_controls .jmplayer_control_volume").removeClass('jmp_hide');
+					}
+				},
+				 // On progress the media
+				onprogress: function(e,buffered_time){
+					e = e || Event || window.Event;
+					var tgt = e.target || e.srcElement ||e.currentTarget;
+					jQuery(tgt).closest(".jmplayer_holder").find(".jmplayer_controls .jmplayer_control_seek_buffer").val( ((buffered_time/tgt.duration)*100).toFixed(2) );
+				},
+				onsuspend: null, // On suspend the media
+				onabort: null, // On abort the media
+				onemptied: null, // On progress the media
+				onstalled: null, // On stalled the media
+				// On playing the media
+				onplay: function(e){
+					e = e || Event || window.Event;
+					var tgt = e.target || e.srcElement ||e.currentTarget;
+					jQuery(tgt).closest(".jmplayer_holder").find(".jmplayer_loading").removeClass('jmp_hide');
+					jQuery(tgt).closest(".jmplayer_holder").find(".jmplayer_logo").addClass('jmp_hide');
+					jQuery(tgt).closest(".jmplayer_holder").find(".jmplayer_controls .jmplayer_control_play").addClass('jmp_hide');
+					jQuery(tgt).closest(".jmplayer_holder").find(".jmplayer_controls .jmplayer_control_pause").removeClass('jmp_hide');
+				},
+				// On pause the media
+				onpause: function(e){
+					e = e || Event || window.Event;
+					var tgt = e.target || e.srcElement ||e.currentTarget;
+					jQuery(tgt).closest(".jmplayer_holder").find(".jmplayer_controls .jmplayer_control_play").removeClass('jmp_hide');
+					jQuery(tgt).closest(".jmplayer_holder").find(".jmplayer_controls .jmplayer_control_pause").addClass('jmp_hide');
+				}, 
+				 // On loaded metadata the media
+				onloadedmetadata: function(e){
+					e = e || Event || window.Event;
+					var tgt = e.target || e.srcElement ||e.currentTarget;
+					jQuery(tgt).closest(".jmplayer_holder").find(".jmplayer_loading").addClass('jmp_hide');
+					jQuery(tgt).closest(".jmplayer_holder").find(".jmplayer_logo").removeClass('jmp_hide');
+					jQuery(tgt).closest(".jmplayer_holder").find(".jmplayer_controls .jmplayer_control_play").removeClass('jmp_hide');
+					jQuery(tgt).closest(".jmplayer_holder").find(".jmplayer_controls .jmplayer_control_pause").addClass('jmp_hide');
+					
+					
+					jQuery(tgt).closest(".jmplayer_holder").find(".jmplayer_controls .jmplayer_control_time .jmplayer_control_time_current").html( parseSeconds(0) );
+					jQuery(tgt).closest(".jmplayer_holder").find(".jmplayer_controls .jmplayer_control_time .jmplayer_control_time_total").html( parseSeconds(tgt.duration)  );
+
+					jQuery(tgt).closest(".jmplayer_holder").find(".jmplayer_controls .jmplayer_control_seek_play").removeClass('jmp_hide');
+					jQuery(tgt).closest(".jmplayer_holder").find(".jmplayer_controls .jmplayer_control_seek_loading").addClass('jmp_hide');
+				},
+				onloadeddata: null, // On loaded data the media
+				 // On waiting the media
+				onwaiting: function(e,buffered_time){
+					e = e || Event || window.Event;
+					var tgt = e.target || e.srcElement ||e.currentTarget;
+					jQuery(tgt).closest(".jmplayer_holder").find(".jmplayer_loading").removeClass('jmp_hide');
+					jQuery(tgt).closest(".jmplayer_holder").find(".jmplayer_logo").addClass('jmp_hide');
+				},
+				// On playing the media
+				onplaying: function(e){
+					e = e || Event || window.Event;
+					var tgt = e.target || e.srcElement ||e.currentTarget;
+					jQuery(tgt).closest(".jmplayer_holder").find(".jmplayer_loading").addClass('jmp_hide');
+					jQuery(tgt).closest(".jmplayer_holder").find(".jmplayer_logo").addClass('jmp_hide');
+					jQuery(tgt).closest(".jmplayer_holder").find(".jmplayer_controls .jmplayer_control_play").addClass('jmp_hide');
+					jQuery(tgt).closest(".jmplayer_holder").find(".jmplayer_controls .jmplayer_control_pause").removeClass('jmp_hide');
+				},
+				// On can play the media
+				oncanplay: function(e){
+					e = e || Event || window.Event;
+					var tgt = e.target || e.srcElement ||e.currentTarget;
+					jQuery(tgt).closest(".jmplayer_holder").find(".jmplayer_loading").addClass('jmp_hide');
+					jQuery(tgt).closest(".jmplayer_holder").find(".jmplayer_logo").addClass('jmp_hide');
+				},
+				oncanplaythrough: null, // On can play through the media
+				onseeking: null, // On seeking the media
+				onseeked: null, // On seek the media
+				 // On time update the media
+				ontimeupdate: function(e,buffered_time){
+					e = e || Event || window.Event;
+					var tgt = e.target || e.srcElement ||e.currentTarget;
+					
+					var buffered_percentage = ((buffered_time/tgt.duration)*100).toFixed(2);
+					jQuery(tgt).closest(".jmplayer_holder").find(".jmplayer_controls .jmplayer_control_time .jmplayer_control_time_current").html( parseSeconds( buffered_time ) );
+					if(!isNaN(buffered_percentage)){
+						jQuery(tgt).closest(".jmplayer_holder").find(".jmplayer_controls .jmplayer_control_seek_input").val( buffered_percentage );
+						jQuery(tgt).closest(".jmplayer_holder").find(".jmplayer_controls .jmplayer_control_seek_play").val( buffered_percentage );
+					}
+				},
+				// On end the media
+				onended:  function(e){ 
+					e = e || Event || window.Event;
+					var tgt = e.target || e.srcElement ||e.currentTarget;
+					playNext();
+				}, 
+				onratechange: null, // On rate change the media
+				ondurationchange: null, // On duration change the media
+				// On volume change the media
+				onvolumechange: function(e){ 
+					e = e || Event || window.Event;
+					var tgt = e.target || e.srcElement ||e.currentTarget;
+					
+					var getVol= tgt.volume;
+
+					if( getVol==0 || tgt.muted ){
+						jQuery(tgt).closest(".jmplayer_holder").find(".jmplayer_controls .jmplayer_control_mute").removeClass('jmp_hide');
+						jQuery(tgt).closest(".jmplayer_holder").find(".jmplayer_controls .jmplayer_control_volume").addClass('jmp_hide');
+					}else{
+						jQuery(tgt).closest(".jmplayer_holder").find(".jmplayer_controls .jmplayer_control_mute").addClass('jmp_hide');
+						jQuery(tgt).closest(".jmplayer_holder").find(".jmplayer_controls .jmplayer_control_volume").removeClass('jmp_hide');
+					}
+				},
+				onready: null, // On ready the media
+				 // On resize the media
+				onresize: function(e){
+					e = e || Event || window.Event;
+					var tgt = e.target || e.srcElement ||e.currentTarget;
+					if((window.fullScreen) || (window.innerWidth == screen.width && window.innerHeight == screen.height)) {
+						jQuery(tgt).closest(".jmplayer_holder").find(".jmplayer_controls .jmplayer_control_fullscreen").addClass('jmp_hide');
+						jQuery(tgt).closest(".jmplayer_holder").find(".jmplayer_controls .jmplayer_control_restorescreen").removeClass('jmp_hide');
+					} else {
+						jQuery(tgt).closest(".jmplayer_holder").find(".jmplayer_controls .jmplayer_control_fullscreen").removeClass('jmp_hide');
+						jQuery(tgt).closest(".jmplayer_holder").find(".jmplayer_controls .jmplayer_control_restorescreen").addClass('jmp_hide');
+					}
+				},
+				// On click the media
+				onclick: function(e){
+					e = e || Event || window.Event;
+					var tgt = e.target || e.srcElement || e.currentTarget;
+					if(tgt.paused){
+						var promise = tgt.play();
+					}else{
+						var promise = tgt.pause();
+					}
+					if(promise!== undefined){promise.then(function(){}).catch(function(error) {});}
+				},
+				 // On mute the media
+				onmute: function(e){
+					e = e || Event || window.Event;
+					var tgt = e.target || e.srcElement ||e.currentTarget;
+					jQuery(tgt).closest(".jmplayer_holder").find(".jmplayer_controls .jmplayer_control_mute").removeClass('jmp_hide');
+					jQuery(tgt).closest(".jmplayer_holder").find(".jmplayer_controls .jmplayer_control_volume").addClass('jmp_hide');
+
+					jQuery(tgt).closest(".jmplayer_holder").find(".jmplayer_controls .jmplayer_control_volume_input").val(0);
+				},
+				 // On unmute the media
+				onunmute: function(e){
+					e = e || Event || window.Event;
+					var tgt = e.target || e.srcElement ||e.currentTarget;
+					jQuery(tgt).closest(".jmplayer_holder").find(".jmplayer_controls .jmplayer_control_mute").addClass('jmp_hide');
+					jQuery(tgt).closest(".jmplayer_holder").find(".jmplayer_controls .jmplayer_control_volume").removeClass('jmp_hide');
+
+					jQuery(tgt).closest(".jmplayer_holder").find(".jmplayer_controls .jmplayer_control_volume_input").val(tgt.volume*100);
+				},
+			});
+
+	});
+
+</script>
+<script>
+	
+</script>
+
+</body>
+</html>
